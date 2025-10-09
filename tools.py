@@ -224,15 +224,14 @@ def capping(config, robot, pose_init=None):
     #     robot.lmove(rel=1, z=-0.5)
 
     vaj = [700, 4000, 10000]
-    #Decapping joints, should be used in reverse order for capping?:
-    decapping_joints = [#With current setting, desired J5 middle point of decapping is -96°, this position alligns the hose fittings in the robot and in the gripper
-        # [-52.097168, -12.436523, -46.955566, 0, -30.60791, 154, 485], #Before decapping
-        [-52.141113, -12.348633, -47.06543, 0, -30.585938, 104, 485], #New Before decapping
-        # [-52.097168, -11.491699, -48.186035, 0, -30.344238, -316, 485] #After decapping
-        [-52.075195, -11.623535, -47.680664, -0.087891, -30.673828, -276, 485] #New After decapping
+    capping_joints = [#With current setting, desired J5 middle point of decapping is -96°, this position alligns the hose fittings in the robot and in the gripper
+        # [-52.075195, -11.623535, -47.680664, -0.087891, -30.673828, -276, 485], #Before capping
+        # [-52.141113, -12.348633, -47.06543, 0, -30.585938, 104, 485], #After capping
+        [-51.723633, -12.414551, -45.769043, 0, -31.772461, -301, 485], #Before capping
+        [-51.745605, -13.249512, -44.714355, 0, -32.01416, 129, 485], #After capping
     ]
-    robot.jmove(rel=0, vel=vaj[0], accel=vaj[1], jerk=vaj[2], cont=0, j0=decapping_joints[1][0], j1=decapping_joints[1][1], j2=decapping_joints[1][2], j3=decapping_joints[1][3], j4=decapping_joints[1][4], j5=decapping_joints[1][5], timeout=-1)
-    robot.jmove(rel=0, vel=vaj[0], cont=0, j0=decapping_joints[0][0], j1=decapping_joints[0][1], j2=decapping_joints[0][2], j3=decapping_joints[0][3], j4=decapping_joints[0][4], j5=decapping_joints[0][5], timeout=-1)
+    robot.jmove(rel=0, vel=vaj[0], accel=vaj[1], jerk=vaj[2], cont=0, j0=capping_joints[0][0], j1=capping_joints[0][1], j2=capping_joints[0][2], j3=capping_joints[0][3], j4=capping_joints[0][4], j5=capping_joints[0][5], timeout=-1)
+    robot.jmove(rel=0, vel=vaj[0], cont=0, j0=capping_joints[1][0], j1=capping_joints[1][1], j2=capping_joints[1][2], j3=capping_joints[1][3], j4=capping_joints[1][4], j5=capping_joints[1][5], timeout=-1)
 
     #J5 must return to 0 to avoid excesive motions. This motion also adds 90° of cap turn to tighten it further:
     output(config.robot_gripper["open"], robot)
@@ -246,7 +245,8 @@ def vial_to_tray(config, robot):
     return robot.pick_n_place(**config.vial_to_tray)
 
 def generate_vials_caps_coords():
-    center_vial = [31*25+12.5, -(10*25+12.5)] #These are frame coordinates, calculated based on position on base plate
+    # center_vial = [31*25+12.5, -(10*25+12.5)] #These are frame coordinates, calculated based on position on base plate
+    center_vial = [31*25+12.5-(1.4+12.5)/2, -(10*25+12.5)+(1.4+12.5)/2] #These are frame coordinates, calculated based on position on base plate
     Vials_coords = []
     [i,j] = [0,0] # i: row, j: column
     for _ in range(9):
