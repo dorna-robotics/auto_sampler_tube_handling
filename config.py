@@ -45,6 +45,7 @@ cap = {
 #############################################################
 robot_gripper = {
     "cap_decap": [0, 0, 12+27+6.9, 0, 0, 0], #Z=screw out of gripper+gripper+gripper base, this gives the lowest point of the screws
+    "vial_drop": [0, 0, 71, 0, 0, 0],
     "open": [[1, 0, 0.25]],
     "close": [[1, 1, 0.25]],
     "vial":{
@@ -66,38 +67,37 @@ robot_gripper = {
 # Stations
 #############################################################
 decapper = {
-    "aux": [485, 0],
-    "frame": [37*25+12.5-23.5, -(10*25+12.5), 0, 180, 0, 0],
+    "aux": [435, 0],
+    "frame": [35*25+12.5-23.5, -(10*25+12.5), 0, 180, 0, 0],
     "vial_drop": [-0.13949975311390972, 4.105025002541481, -39.18238253652287, 0.23170989712236975, -0.33843512546358934, 48.040617793171805],
     "vial_remove_cap": [-4.2066696461535, 3.6970004445179825, -43.452655907016194, 0.0016795849423070833, -0.024713694437646778, 96.09716670016483], #Done before robot recalibration, no longer valid
     "vial_pick": [-4.602693987670477, 4.337848920734132, -35.5493322734435, 0.23452653920962876, -0.3244143124774287, 48.01046749832838],
     "cap_drop": [-0.2850402522691411, 4.727967870527436, -41.64823677029854, -0.010522056052978799, 0.02003404402905445, 48.03222639721679],
-    "r": 3, #Radius used to shake the capsule on top of the bottle after pouring in the powder
     "open": [[0, 0, 0.25]],
     "close": [[0, 1, 0.25]]
 }
 
 vial_holder = {
-    "aux": [485, 0],
-    "frame": [31*25+12.5-(1.4+12.5)/2, -(10*25+12.5)+(1.4+12.5)/2, 0, 180, 0, 0], #Position of vial at col 3, row 4 from tray's bottom left corner
-    "pick": [-0.05716812026093976, 1.1853255529723015, -33.06382287695952, 0.23287556085751854, -0.3172811067209202, 47.98701517310126],
-    "drop": [-0.1455158211095977, 1.2360057567397007, -37.077112148668476, 0.2327585229236095, -0.3173253109692344, 48.00894415631942],
-    "grid_spacing": 12.5 + 1.4
+    "aux": [485, 0], #Original
+    "frame": [778.2555219769545, -270.90092983538375, 0, 180, 0, 0], #This exact value is not relevant, it's updated on each iteration before pick up
+    "pick": [1.2848547803481551, -0.6376452704425901, -33.06382287695952, 0.23287556085751854, -0.3172811067209202, 47.98701517310126],
+    "vial_insertion": [0.7780088287922808, 1.5867262079533475, -25.5959426972259, -6.694248991944859, 2.7723314835873385, 44.72395062043049],
+    "drop": [1.2848547803481551, -0.6376452704425901, -14.334862947201302, -1.2390190108418174e-06, 1.5174821696505201e-06, 45.000000000000014],
+    "grid_spacing": 12.5 + 1.4,
+    "vial_tilt": 40 #Tilt angle for the vials to ensure easy insertion in tray. Applied to globla X and Y axes, not done locally
 }
 
 cap_holder = {
-    "aux": [485, 0],
-    "frame": [37*25+12.5, -(6*25+12.5), 0, 180, 0, 0],
+    "aux": [435, 0],
+    "frame": [35*25+12.5, -(6*25+12.5), 0, 180, 0, 0],
     "pick": [0.5286622981476512, 3.5193017123831964, -10.858378489849372, -4.769162562411459e-16, 2.572475798769063e-15, -42.011718],
     "drop": [-3.1190497933401957, 3.1627060997030867, -13.228152233190258, 0.02347517880592545, -0.08709918072320023, 45.15379995820485] #Done before robot recalibration, no longer valid
 }
 
 camera = {
-    "aux": [485, 0],
+    "aux": [435, 0],
     "frame": [31*25+12.5, -(10*25+12.5), 0, 180, 0, 0],
     "vials": [-0.8261485518240761, -52.573060583650374, -84.59651760709431, 0.020111097002960723, -0.00885000707069195, 1.5043170460124506e-13], #Calculated from "frame" and "joints" using gripper["cap_decap"]
-    # "joints": [-66.247559, 6.547852, -109.248047, 0, 12.678223, -66.247559] # Original
-    # "joints": [-66.379395, 5.712891, -112.346191, 0.021973, 16.611328, -66.379395] # Previous
     "joints": [-64.907227, 6.569824, -109.138184, 0.021973, 12.546387, -64.929199],
     "ind_vial": [4.215628633946608, -55.61708449389786, -84.58102105223001, 0.017875335293693777, -0.013641431814762501, -0.0005246204567250441],
     "z_guess": 141.5
@@ -151,19 +151,19 @@ take_init_picture = {
     "freedom": {"num":num, "range":[0.05, 0.05, 0.05], "early_exit":False}, "timeout": -1, "sim":0
 }
 
-take_ind_picture = {
-    "pick": {
-        "type": "world", # robot, world, joint
-        "loc": [camera["ind_vial"], camera["aux"]],
-        "frame": camera["frame"],
-        "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]], #[0]: Tool defiinition before grabbing, [1]: Tool after grabbing
-    },
-    "base_in_world": robot["base_in_world"],
-    "aux_dir": robot["aux_dir"],
-    "sleep": sleep, 
-    "motion": "jmove", "speed": speed, "cont": 0, "corner": 250, 
-    "freedom": {"num":num, "range":[0.05, 0.05, 0.05], "early_exit":False}, "timeout": -1, "sim":0
-}
+# take_ind_picture = {
+#     "pick": {
+#         "type": "world", # robot, world, joint
+#         "loc": [camera["ind_vial"], camera["aux"]],
+#         "frame": camera["frame"],
+#         "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]], #[0]: Tool defiinition before grabbing, [1]: Tool after grabbing
+#     },
+#     "base_in_world": robot["base_in_world"],
+#     "aux_dir": robot["aux_dir"],
+#     "sleep": sleep, 
+#     "motion": "jmove", "speed": speed, "cont": 0, "corner": 250, 
+#     "freedom": {"num":num, "range":[0.05, 0.05, 0.05], "early_exit":False}, "timeout": -1, "sim":0
+# }
 
 vial_tray_to_decapper = {
     "pick": {
@@ -172,7 +172,7 @@ vial_tray_to_decapper = {
         "frame": vial_holder["frame"],
         "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]], #[0]: Tool defiinition before grabbing, [1]: Tool after grabbing
         "output": robot_gripper["close"] + decapper["open"], # List of lists where each element has the format: [pin_index,state,sleep]
-        "approach": [[0, 0, -50, 0, 0, 0]],
+        "approach": [[0, 0, -40, 0, 0, 0]],
         "exit": [[0, 0, -50, 0, 0, 0]]
     },
     "place": {
@@ -182,39 +182,38 @@ vial_tray_to_decapper = {
         "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]],
         "output": robot_gripper["open"] + decapper["close"], # List of lists where each element has the format: [pin_index,state,sleep]
         "approach": [[0, 0, -50, 0, 0, 0],[0, 0, -24, 0, 0, 0]],
-        # "exit": [[0, 0, 2, 0, 0, 0]] #For original full sequence
-        "exit": [[0, 0, -10, 0, 0, 0]] #For new sequence, capping and placing only
-    },
-    "base_in_world": robot["base_in_world"],
-    "aux_dir": robot["aux_dir"],
-    "sleep": sleep, 
-    "motion": "jmove", "speed": speed, "cont": 0, "corner": 250, 
-    "freedom": {"num":num, "range":[0.05, 0.05, 0.05], "early_exit":False}, "timeout": -1, "sim":sim
-}
-
-decapper_to_cap_holder = {
-    "pick": {
-        "type": "world", # robot, world, joint
-        "loc": [decapper["vial_remove_cap"], decapper["aux"]],
-        "frame": decapper["frame"],
-        "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]],
-        "exit": [[0, 0, -20, 0, 0, 0]]
-    },
-    "place": {
-        "type": "world", # robot, world, joint
-        "loc": [cap_holder["drop"], cap_holder["aux"]],
-        "frame": cap_holder["frame"],
-        "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]],
-        "output": robot_gripper["open"], # List of lists where each element has the format: [pin_index,state,sleep]
-        "approach": [[0, 0, -20, 0, 0, 0],[0, 0, -3, 0, 0, 0]],
         "exit": [[0, 0, -10, 0, 0, 0]]
     },
     "base_in_world": robot["base_in_world"],
     "aux_dir": robot["aux_dir"],
     "sleep": sleep, 
     "motion": "lmove", "speed": speed, "cont": 0, "corner": 250, 
-    "freedom": {"num":num, "range":[0.05, 0.05, 0.05], "early_exit":False}, "timeout": -1, "sim":sim
+    "freedom": {"num":num, "range":[0.1, 0.1, 0.1], "early_exit":False}, "timeout": -1, "sim":sim
 }
+
+# decapper_to_cap_holder = {
+#     "pick": {
+#         "type": "world", # robot, world, joint
+#         "loc": [decapper["vial_remove_cap"], decapper["aux"]],
+#         "frame": decapper["frame"],
+#         "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]],
+#         "exit": [[0, 0, -20, 0, 0, 0]]
+#     },
+#     "place": {
+#         "type": "world", # robot, world, joint
+#         "loc": [cap_holder["drop"], cap_holder["aux"]],
+#         "frame": cap_holder["frame"],
+#         "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]],
+#         "output": robot_gripper["open"], # List of lists where each element has the format: [pin_index,state,sleep]
+#         "approach": [[0, 0, -20, 0, 0, 0],[0, 0, -3, 0, 0, 0]],
+#         "exit": [[0, 0, -10, 0, 0, 0]]
+#     },
+#     "base_in_world": robot["base_in_world"],
+#     "aux_dir": robot["aux_dir"],
+#     "sleep": sleep, 
+#     "motion": "lmove", "speed": speed, "cont": 0, "corner": 250, 
+#     "freedom": {"num":num, "range":[0.05, 0.05, 0.05], "early_exit":False}, "timeout": -1, "sim":sim
+# }
 
 cap_to_vial = {
     "pick": {
@@ -242,20 +241,12 @@ cap_to_vial = {
 
 vial_to_tray = {
     "pick": {
-    #     "type": "world", # robot, world, joint
-    #     "loc": [decapper["vial_pick"], decapper["aux"]],
-    #     "frame": decapper["frame"],
-    #     "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]],
-    #     "output": decapper["open"] + robot_gripper["close"], # List of lists where each element has the format: [pin_index,state,sleep]
-    #     "exit": [[0, 0, -50, 0, 0, 0]]
-    # },
-    # "place": {
         "type": "world", # robot, world, joint
         "loc": [vial_holder["drop"], vial_holder["aux"]],
         "frame": vial_holder["frame"],
-        "tool": [robot_gripper["cap_decap"], robot_gripper["cap_decap"]], #[0]: Tool defiinition before grabbing, [1]: Tool after grabbing
+        "tool": [robot_gripper["vial_drop"], robot_gripper["vial_drop"]], #[0]: Tool defiinition before grabbing, [1]: Tool after grabbing
         "output": robot_gripper["open"], # List of lists where each element has the format: [pin_index,state,sleep]
-        "approach": [[0, 0, -70, 0, 0, 0],[0, 0, -24.5, 0, 0, 0],[0, 0, -14, 0, 0, 0]], #Safe vertical align, just above the other vials, just above the hole entrance, just clear of the bottom
+        "approach": [[0, 0, -60, 0, 0, 0],[0, 0, -12, 0, vial_holder["vial_tilt"], 0],[0, 0, -9, 0, 0, 0]], #Safe vertical align, just above the hole entrance, just clear of the bottom
         "exit": [[0, 0, -50, 0, 0, 0]]
     },
     "base_in_world": robot["base_in_world"],
