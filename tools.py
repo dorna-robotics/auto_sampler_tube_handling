@@ -220,18 +220,28 @@ def cap_to_vial(config, robot):
 
 def capping(config, robot, pose_init=None):
     vaj = [700, 4000, 10000]
+    # rail = config.decapper["aux"][0] #Could be used to ensure rail has the right value based directly on previous motion
+    # capping_joints = [#With current setting, desired J5 middle point of decapping is -96°, this position alligns the hose fittings in the robot and in the gripper
+    #     [-51.723633, -12.414551, -45.769043, 0, -31.772461, -301, 435], #Before capping
+    #     [-51.745605, -13.249512, -44.714355, 0, -32.01416, 129, 435], #After capping
+    # ]
+
     capping_joints = [#With current setting, desired J5 middle point of decapping is -96°, this position alligns the hose fittings in the robot and in the gripper
-        [-51.723633, -12.414551, -45.769043, 0, -31.772461, -301, 435], #Before capping
-        [-51.745605, -13.249512, -44.714355, 0, -32.01416, 129, 435], #After capping
+        [-51.723633, -12.590332, -45.505371, 0, -31.904297, -53, 435], #Before first capping turn
+        [-51.723633, -12.963867, -45.021973, 0, -32.01416, 307, 435], #After first capping turn
+        [-51.723633, -12.766113, -45.263672, 0, -31.948242, -275, 435], #Before second capping turn
+        [-51.723633, -12.963867, -45.021973, 0, -32.01416, -95, 435], #After second capping turn
     ]
     robot.jmove(rel=0, vel=vaj[0], accel=vaj[1], jerk=vaj[2], cont=0, j0=capping_joints[0][0], j1=capping_joints[0][1], j2=capping_joints[0][2], j3=capping_joints[0][3], j4=capping_joints[0][4], j5=capping_joints[0][5], timeout=-1)
     robot.jmove(rel=0, vel=vaj[0], cont=0, j0=capping_joints[1][0], j1=capping_joints[1][1], j2=capping_joints[1][2], j3=capping_joints[1][3], j4=capping_joints[1][4], j5=capping_joints[1][5], timeout=-1)
 
     #J5 must return to 0 to avoid excesive motions. This motion also adds 90° of cap turn to tighten it further:
     output(config.robot_gripper["open"], robot)
-    robot.jmove(rel=0, vel=vaj[0], cont=0, j5=-185, timeout=-1)
+    # robot.jmove(rel=0, vel=vaj[0], cont=0, j5=-185, timeout=-1)
+    robot.jmove(rel=0, vel=vaj[0], accel=vaj[1], jerk=vaj[2], cont=0, j0=capping_joints[2][0], j1=capping_joints[2][1], j2=capping_joints[2][2], j3=capping_joints[2][3], j4=capping_joints[2][4], j5=capping_joints[2][5], timeout=-1)
     output(config.robot_gripper["close"], robot)
-    robot.jmove(rel=0, vel=vaj[0], cont=0, j5=-95, timeout=-1)
+    # robot.jmove(rel=0, vel=vaj[0], cont=0, j5=-95, timeout=-1)
+    robot.jmove(rel=0, vel=vaj[0], accel=vaj[1], jerk=vaj[2], cont=0, j0=capping_joints[3][0], j1=capping_joints[3][1], j2=capping_joints[3][2], j3=capping_joints[3][3], j4=capping_joints[3][4], j5=capping_joints[3][5], timeout=-1)
     output(config.decapper["open"], robot)
     robot.lmove(rel=1, vel=150*config.speed, cont=0, z=50, timeout=-1)
 
@@ -253,30 +263,82 @@ def generate_caps_coords():
 
 def generate_vial_coords_vision(config, vial_vis_pxls):
     #Calibration data:
+    # cal_pxl_positions = [
+    #     #Visual:
+    #     [234, 343], #Top left
+    #     [290, 157], #Top center
+    #     [390, 25], #Top right
+    #     [307, 394], #Center left
+    #     [422, 236], #Center
+    #     [506, 63], #Center right
+    #     [450, 463], #Bottom left
+    #     [540, 319], #Bottom center
+    #     [622, 161] #Bottom right
+    # ]
+
+    # cal_robot_coords = [
+    #     #Visual X and Y:
+    #     [184.465494, -210.403642], #Top left
+    #     [192.734647, -270.087779], #Top center
+    #     [182.474894, -319.387575], #Top right
+    #     [157.988354, -206.496997], #Center left
+    #     [145.443447, -265.152446], #Center
+    #     [145.251345, -324.158048], #Center right
+    #     [107.502585, -204.368494], #Bottom left
+    #     [101.743223, -257.788362], #Bottom center
+    #     [100.219337, -313.212557] #Bottom right
+    # ]
+
+    # cal_pxl_positions = [
+    #     #Visual:
+    #     [234, 343], #Top left
+    #     [302, 168], #Top center
+    #     [353, 22], #Top right
+    #     [373, 439], #Center left
+    #     [389, 241], #Center
+    #     [470, 46], #Center right
+    #     [511, 466], #Bottom left
+    #     [579, 271], #Bottom center
+    #     [643, 103] #Bottom right
+    # ]
+
+    # cal_robot_coords = [
+    #     #Visual X and Y:
+    #     [136.414375, -184.90726], #Top left
+    #     [137.484441, -247.979733], #Top center
+    #     [135.884311, -296.912878], #Top right
+    #     [90.72823, -174.934899], #Center left
+    #     [104.737793, -235.944598], #Center
+    #     [97.959783, -299.930801], #Center right
+    #     [47.466675, -178.941335], #Bottom left
+    #     [47.002161, -244.990474], #Bottom center
+    #     [43.982242, -298.850564] #Bottom right
+    # ]
+
     cal_pxl_positions = [
         #Visual:
-        [234, 343], #Top left
-        [290, 157], #Top center
-        [390, 25], #Top right
-        [307, 394], #Center left
-        [422, 236], #Center
-        [506, 63], #Center right
-        [450, 463], #Bottom left
-        [540, 319], #Bottom center
-        [622, 161] #Bottom right
+        [239, 367], #Top left
+        [301, 178], #Top center
+        [350, 30], #Top right
+        [381, 433], #Center left
+        [403, 214], #Center
+        [456, 57], #Center right
+        [494, 458], #Bottom left
+        [564, 259], #Bottom center
+        [616, 112] #Bottom right
     ]
 
     cal_robot_coords = [
         #Visual X and Y:
-        [184.465494, -210.403642], #Top left
-        [192.734647, -270.087779], #Top center
-        [182.474894, -319.387575], #Top right
-        [157.988354, -206.496997], #Center left
-        [145.443447, -265.152446], #Center
-        [145.251345, -324.158048], #Center right
-        [107.502585, -204.368494], #Bottom left
-        [101.743223, -257.788362], #Bottom center
-        [100.219337, -313.212557] #Bottom right
+        [137.967645, -182.933609], #Top left
+        [136.992617, -245.923724], #Top center
+        [135.006638, -293.912369], #Top right
+        [88.93142, -177.962435], #Center left
+        [102.954943, -245.845898], #Center
+        [100.936002, -294.872737], #Center right
+        [52.944641, -179.908295], #Bottom left
+        [51.944164, -246.934241], #Bottom center
+        [49.936064, -294.98378] #Bottom right
     ]
 
     x_comp = config.robot["base_in_world"][0] + config.camera["aux"][0]
