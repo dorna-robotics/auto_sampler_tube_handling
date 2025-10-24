@@ -36,8 +36,12 @@ def update_cap_frame(config, cap_frame, rail_x=485):
 
     print("Cap in world position updated")
 
-def correct_vision_xyz(config, pxl, camera, camera_data, detection):
-    z_guess = config.camera["z_guess"]
+def correct_vision_xyz(config, pxl, camera, camera_data, detection, target):
+    if target == "vials":
+        z_guess = config.camera["z_guess_vials"]
+    else:
+        z_guess = config.camera["z_guess_caps"]
+
     z_gt = (z_guess, z_guess)
     xyz_target_to_cam = camera.xyz(pxl=pxl, depth_frame=camera_data["depth_frame"], depth_int=camera_data["depth_int"], z_gt=z_gt)
 
@@ -173,7 +177,11 @@ def safe_init(config, robot):
     return robot.pick_n_place(**config.safe_init)
 
 def take_init_picture(config, robot):
-    joints = config.camera["joints"] + config.camera["aux"]
+    joints = config.camera["joints_vials"] + config.camera["aux"]
+    robot.go(joint=joints, motion="jmove", freedom=config.take_init_picture["freedom"], cont=0, timeout=-1)
+
+def take_init_picture_caps(config, robot):
+    joints = config.camera["joints_caps"] + config.camera["aux"]
     robot.go(joint=joints, motion="jmove", freedom=config.take_init_picture["freedom"], cont=0, timeout=-1)
 
 # def take_ind_picture(config, robot):
@@ -232,6 +240,19 @@ def capping(config, robot, pose_init=None):
         [-51.723633, -12.766113, -45.263672, 0, -31.948242, -275, 435], #Before second capping turn
         [-51.723633, -12.963867, -45.021973, 0, -32.01416, -95, 435], #After second capping turn
     ]
+
+    # capping_joints = [#With current setting, desired J5 middle point of decapping is -96°, this position alligns the hose fittings in the robot and in the gripper
+    #     [-52.624512, -11.57959, -48.867188, 0, -29.575195, -53, 435], #Before first capping turn
+    #     [-52.624512, -11.931152, -48.383789, 0, -29.663086, 307, 435], #After first capping turn
+    #     [-52.624512, -11.755371, -48.625488, 0, -29.597168, -275, 435], #Before second capping turn
+    #     [-52.624512, -11.931152, -48.405762, 0, -29.663086, -95, 435], #After second capping turn
+    # ]
+
+    #{"cmd":"jmove","rel":0,"j0":-52.624512,"j1":-11.57959,"j2":-48.867188,"j3":0,"j4":-29.575195,"j5":-53.898926}
+    #{"cmd":"jmove","rel":0,"j0":-52.624512,"j1":-11.931152,"j2":-48.383789,"j3":0,"j4":-29.663086,"j5":306.101074}
+    #{"cmd":"jmove","rel":0,"j0":-52.624512,"j1":-11.755371,"j2":-48.625488,"j3":0,"j4":-29.597168,"j5":-275.910645}
+    #{"cmd":"jmove","rel":0,"j0":-52.624512,"j1":-11.931152,"j2":-48.405762,"j3":0,"j4":-29.663086,"j5":-95.910645}
+
     robot.jmove(rel=0, vel=vaj[0], accel=vaj[1], jerk=vaj[2], cont=0, j0=capping_joints[0][0], j1=capping_joints[0][1], j2=capping_joints[0][2], j3=capping_joints[0][3], j4=capping_joints[0][4], j5=capping_joints[0][5], timeout=-1)
     robot.jmove(rel=0, vel=vaj[0], cont=0, j0=capping_joints[1][0], j1=capping_joints[1][1], j2=capping_joints[1][2], j3=capping_joints[1][3], j4=capping_joints[1][4], j5=capping_joints[1][5], timeout=-1)
 
@@ -357,3 +378,46 @@ def generate_vial_coords_vision(config, vial_vis_pxls):
         Vial_grid_coords.append(result_griddata[0].tolist())
 
     return Vial_grid_coords
+
+def generate_cap_coords_vision(config, cap_vis_pxls):
+    #Calibration data:
+    cal_pxl_positions = [
+        [287, 219], #Top left
+        [367, 161], #Top center
+        [449, 105], #Top right
+        [345, 301], #Center left
+        [424, 241], #Center
+        [504, 181], #Center right
+        [403, 376], #Bottom left
+        [483, 323], #Bottom center
+        [565, 260] #Bottom right
+    ]
+
+    cal_robot_coords = [
+        [283.693317, -128.534975], #Top left
+        [282.74792, -166.478378], #Top center
+        [281.174783, -203.80498], #Top right
+        [245.121765, -127.454174], #Center left
+        [245.734928, -164.464015], #Center
+        [244.742719, -202.981515], #Center right
+        [208.898492, -127.498026,], #Bottom left
+        [206.214525, -163.456116], #Bottom center
+        [206.107841, -203.37418] #Bottom right
+    ]
+
+    x_comp = config.robot["base_in_world"][0] + config.camera["aux"][0]
+
+    cal_world_coords = []
+    for x in cal_robot_coords:
+        coord = x
+        coord[0] += x_comp
+        cal_world_coords.append(coord)
+
+    Cap_grid_coords = []
+
+    for x in cap_vis_pxls:
+        result_griddata = griddata(cal_pxl_positions, cal_world_coords, x, method='cubic')
+
+        Cap_grid_coords.append(result_griddata[0].tolist())
+
+    return Cap_grid_coords
